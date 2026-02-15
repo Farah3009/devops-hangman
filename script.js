@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generateKeyboard();
 });
 
+// Load words from localStorage or default
 function loadWordBank() {
     const stored = localStorage.getItem('devopsWords');
     if (stored) {
@@ -35,10 +36,12 @@ function loadWordBank() {
     displayWordBank();
 }
 
+// Save wordBank to localStorage
 function saveWordBank() {
     localStorage.setItem('devopsWords', JSON.stringify(wordBank));
 }
 
+// Display the word bank
 function displayWordBank() {
     const wordList = document.getElementById('wordList');
     const wordCount = document.getElementById('wordCount');
@@ -119,7 +122,7 @@ function editWord(index) {
     displayWordBank();
 }
 
-// DELETE WORD
+// DELETE WORD: confirm deletion, update localStorage
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
         wordBank.splice(index, 1);
@@ -160,7 +163,7 @@ function startGame() {
     nextRound();
 }
 
-// NEXT ROUND
+// NEXT ROUND: alternate players, pick random word
 function nextRound() {
     if (wordBank.length === 0) {
         alert('No words in the word bank! Add some words first.');
@@ -171,7 +174,6 @@ function nextRound() {
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
 
-    // Pick a random word
     let randomIndex;
     do {
         randomIndex = Math.floor(Math.random() * wordBank.length);
@@ -186,7 +188,6 @@ function nextRound() {
     updateWrongLetters();
     updateLives();
 
-    // Alternate player turns
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
@@ -287,7 +288,6 @@ function gameLost() {
     document.getElementById('statusMessage').textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'loser');
     
-    // Switch player for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
