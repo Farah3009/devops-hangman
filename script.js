@@ -94,7 +94,7 @@ function addWord() {
     displayWordBank();
 }
 
-// EDIT WORD: validate, prevent deletion, no duplicates, valid letters only
+// EDIT WORD: validate, prevent duplicates, valid letters only
 function editWord(index) {
     const newWord = prompt('Edit word:', wordBank[index]);
     if (!newWord) return;
@@ -119,7 +119,7 @@ function editWord(index) {
     displayWordBank();
 }
 
-// DELETE WORD: confirm, remove, update count
+// DELETE WORD
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
         wordBank.splice(index, 1);
@@ -128,7 +128,7 @@ function deleteWord(index) {
     }
 }
 
-// KEYBOARD GENERATION
+// GENERATE KEYBOARD
 function generateKeyboard() {
     const keyboard = document.getElementById('keyboard');
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -160,32 +160,33 @@ function startGame() {
     nextRound();
 }
 
-// NEXT ROUND: alternates players, random word, resets counters
+// NEXT ROUND
 function nextRound() {
     if (wordBank.length === 0) {
         alert('No words in the word bank! Add some words first.');
         return;
     }
-    
+
     gameState.guessedLetters = [];
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
-    
+
+    // Pick a random word
     let randomIndex;
     do {
         randomIndex = Math.floor(Math.random() * wordBank.length);
     } while (wordBank[randomIndex] === gameState.currentWord && wordBank.length > 1);
-    
+
     gameState.currentWord = wordBank[randomIndex];
-    
+
     document.getElementById('gameStatus').className = 'game-status';
     resetHangman();
     resetKeyboard();
     updateWordDisplay();
     updateWrongLetters();
     updateLives();
-    
-    // Alternate player after round
+
+    // Alternate player turns
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
@@ -209,7 +210,7 @@ function guessLetter(letter) {
     checkGameStatus();
 }
 
-// DISPLAY FUNCTIONS
+// UPDATE DISPLAY
 function updateWordDisplay() {
     const display = document.getElementById('wordDisplay');
     display.textContent = [...gameState.currentWord].map(l => gameState.guessedLetters.includes(l) ? l : '_').join(' ');
@@ -226,6 +227,7 @@ function updateLives() {
     document.getElementById('livesLeft').textContent = livesLeft;
 }
 
+// HANGMAN
 function updateHangman() {
     const wrongOrder = ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg'];
     const partIndex = gameState.wrongGuesses - 1;
