@@ -159,21 +159,26 @@ function nextRound() {
         alert('No words in the word bank! Add some words first.');
         return;
     }
-    
+
     gameState.guessedLetters = [];
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
-    
+
+    // pick a random word
     const randomIndex = Math.floor(Math.random() * wordBank.length);
     gameState.currentWord = wordBank[randomIndex];
-    
-    document.getElementById('gameStatus').classList.remove('show');
+
     document.getElementById('gameStatus').className = 'game-status';
     resetHangman();
     resetKeyboard();
     updateWordDisplay();
     updateWrongLetters();
     updateLives();
+
+    // alternate player turns
+    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+
+    // highlight current player
     updateCurrentPlayer();
 }
 
