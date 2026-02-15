@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generateKeyboard();
 });
 
+// Toggle theme (moon/sun)
 function toggleTheme() {
     const themeIcon = document.querySelector('.theme-icon');
     if (themeIcon.textContent === '🌙') {
@@ -42,6 +43,7 @@ function toggleTheme() {
     }
 }
 
+// Switch tabs in the UI
 function switchTab(tabName) {
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
@@ -51,10 +53,29 @@ function switchTab(tabName) {
     event.target.classList.add('active');
 }
 
+// Load word bank from localStorage
+function loadWordBank() {
+    const stored = localStorage.getItem('devopsWords');
+    if (stored) {
+        wordBank = JSON.parse(stored);
+    } else {
+        wordBank = [...defaultWords];
+        saveWordBank();
+    }
+    displayWordBank();
+}
+
+// Save word bank to localStorage
+function saveWordBank() {
+    localStorage.setItem('devopsWords', JSON.stringify(wordBank));
+}
+
+// Display word bank in UI
 function displayWordBank() {
     const wordList = document.getElementById('wordList');
     const wordCount = document.getElementById('wordCount');
     wordCount.textContent = wordBank.length;
+
     if (wordBank.length === 0) {
         wordList.innerHTML = `
             <div class="empty-state">
@@ -64,6 +85,7 @@ function displayWordBank() {
         `;
         return;
     }
+
     wordList.innerHTML = '';
     wordBank.forEach((word, index) => {
         const wordItem = document.createElement('div');
@@ -79,30 +101,56 @@ function displayWordBank() {
     });
 }
 
-function saveWordBank() {
-    localStorage.setItem('devopsWords', JSON.stringify(wordBank));
-}
-
+// Add a word with validation
 function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
-    if (!word || wordBank.includes(word) || /[^A-Z]/.test(word)) return;
+
+    if (!word) {
+        alert('Cannot add empty word!');
+        return;
+    }
+    if (wordBank.includes(word)) {
+        alert('Word already exists!');
+        return;
+    }
+    if (/[^A-Z]/.test(word)) {
+        alert('Word can only contain letters A-Z!');
+        return;
+    }
+
     wordBank.push(word);
     input.value = '';
     saveWordBank();
     displayWordBank();
 }
 
+// Edit a word with validation
 function editWord(index) {
     const newWord = prompt('Edit word:', wordBank[index]);
     if (!newWord) return;
-    const formattedWord = newWord.trim().toUpperCase();
-    if (!formattedWord || wordBank.includes(formattedWord) || /[^A-Z]/.test(formattedWord)) return;
-    wordBank[index] = formattedWord;
+
+    const word = newWord.trim().toUpperCase();
+
+    if (!word) {
+        alert('Cannot set empty word!');
+        return;
+    }
+    if (wordBank.includes(word) && word !== wordBank[index]) {
+        alert('Word already exists!');
+        return;
+    }
+    if (/[^A-Z]/.test(word)) {
+        alert('Word can only contain letters A-Z!');
+        return;
+    }
+
+    wordBank[index] = word;
     saveWordBank();
     displayWordBank();
 }
 
+// Delete a word
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
         wordBank.splice(index, 1);
@@ -111,6 +159,7 @@ function deleteWord(index) {
     }
 }
 
+// Generate keyboard
 function generateKeyboard() {
     const keyboard = document.getElementById('keyboard');
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -125,6 +174,7 @@ function generateKeyboard() {
     }
 }
 
+// Start the game
 function startGame() {
     const p1Name = document.getElementById('player1Name').value.trim();
     const p2Name = document.getElementById('player2Name').value.trim();
@@ -137,33 +187,42 @@ function startGame() {
     nextRound();
 }
 
+// Next round logic
 function nextRound() {
     if (wordBank.length === 0) {
         alert('No words in the word bank! Add some words first.');
         return;
     }
+
     gameState.guessedLetters = [];
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
+
     let randomIndex;
     do {
         randomIndex = Math.floor(Math.random() * wordBank.length);
     } while (gameState.usedWords.includes(randomIndex) && gameState.usedWords.length < wordBank.length);
+
     gameState.currentWord = wordBank[randomIndex];
     gameState.usedWords.push(randomIndex);
     if (gameState.usedWords.length === wordBank.length) gameState.usedWords = [];
+
     document.getElementById('gameStatus').className = 'game-status';
     resetHangman();
     resetKeyboard();
     updateWordDisplay();
     updateWrongLetters();
     updateLives();
+
+    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
 
+// Guess a letter
 function guessLetter(letter) {
     if (!gameState.gameActive) return;
     if (gameState.guessedLetters.includes(letter)) return;
+
     gameState.guessedLetters.push(letter);
     if (!gameState.currentWord.includes(letter)) {
         gameState.wrongGuesses++;
@@ -175,19 +234,20 @@ function guessLetter(letter) {
     checkGameStatus();
 }
 
+// Update display
 function updateWordDisplay() {
     const display = document.getElementById('wordDisplay');
-    display.textContent = [...gameState.currentWord].map(letter => gameState.guessedLetters.includes(letter) ? letter : '_').join(' ');
+    display.textContent = [...gameState.currentWord].map(l => gameState.guessedLetters.includes(l) ? l : '_').join(' ');
 }
 
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
-    const wrong = gameState.guessedLetters.filter(letter => !gameState.currentWord.includes(letter));
-    wrongLettersDiv.textContent = wrong.length === 0 ? 'None yet' : wrong.join(', ');
+    const wrong = gameState.guessedLetters.filter(l => !gameState.currentWord.includes(l));
+    wrongLettersDiv.textContent = wrong.length ? wrong.join(', ') : 'None yet';
 }
 
 function updateLives() {
-    const livesLeft = gameState.maxWrong - gameState.wrongGuesses + 1;
+    const livesLeft = gameState.maxWrong - gameState.wrongGuesses;
     document.getElementById('livesLeft').textContent = livesLeft;
 }
 
@@ -200,62 +260,56 @@ function updateHangman() {
 }
 
 function resetHangman() {
-    ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'].forEach(part => {
-        document.getElementById(part).style.display = 'none';
+    ['head','body','leftArm','rightArm','leftLeg','rightLeg'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
     });
 }
 
 function resetKeyboard() {
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
-        const button = document.getElementById('key-' + letter);
-        if (button) button.disabled = false;
+        const btn = document.getElementById('key-' + letter);
+        if (btn) btn.disabled = false;
     });
 }
 
 function updateCurrentPlayer() {
-    const player1Div = document.getElementById('player1Score');
-    const player2Div = document.getElementById('player2Score');
-    if (gameState.currentPlayer === 1) {
-        player1Div.classList.add('active');
-        player2Div.classList.remove('active');
-    } else {
-        player1Div.classList.remove('active');
-        player2Div.classList.add('active');
-    }
+    const p1Div = document.getElementById('player1Score');
+    const p2Div = document.getElementById('player2Score');
+
+    p1Div.classList.toggle('active', gameState.currentPlayer === 1);
+    p2Div.classList.toggle('active', gameState.currentPlayer === 2);
 }
 
 function checkGameStatus() {
-    if ([...gameState.currentWord].every(letter => gameState.guessedLetters.includes(letter))) {
-        gameWon();
-        return;
-    }
-    if (gameState.wrongGuesses >= gameState.maxWrong) {
-        gameLost();
-        return;
-    }
+    const allGuessed = [...gameState.currentWord].every(l => gameState.guessedLetters.includes(l));
+
+    if (allGuessed) gameWon();
+    else if (gameState.wrongGuesses >= gameState.maxWrong) gameLost();
 }
 
 function gameWon() {
     gameState.gameActive = false;
-    const winner = gameState.currentPlayer === 1 ? 2 : 1;
-    if (winner === 1) {
-        gameState.player1.score += 10;
-        document.getElementById('score1').textContent = gameState.player1.score;
-    } else {
-        gameState.player2.score += 10;
-        document.getElementById('score2').textContent = gameState.player2.score;
-    }
-    const statusDiv = document.getElementById('gameStatus');
-    const winnerName = winner === 1 ? gameState.player1.name : gameState.player2.name;
-    document.getElementById('statusMessage').textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
-    statusDiv.classList.add('show', 'winner');
-    gameState.currentPlayer = winner;
+
+    const winner = gameState.currentPlayer === 1 ? gameState.player2 : gameState.player1;
+    winner.score += 10;
+    document.getElementById('score1').textContent = gameState.player1.score;
+    document.getElementById('score2').textContent = gameState.player2.score;
+
+    document.getElementById('statusMessage').textContent = `🎉 ${winner.name} won! The word was: ${gameState.currentWord}`;
+    document.getElementById('gameStatus').classList.add('show', 'winner');
+
+    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
 }
 
 function gameLost() {
     gameState.gameActive = false;
+
     const currentPlayerName = gameState.currentPlayer === 1 ? gameState.player1.name : gameState.player2.name;
+    const statusDiv = document.getElementById('gameStatus');
+
     document.getElementById('statusMessage').textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
-    document.getElementById('gameStatus').classList.add('show', 'loser');
+    statusDiv.classList.add('show', 'loser');
+
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+    updateCurrentPlayer();
 }
